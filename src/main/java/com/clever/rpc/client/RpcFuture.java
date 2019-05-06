@@ -24,9 +24,6 @@ public class RpcFuture implements Future<Object> {
     private long startTime;
     private long responseTimeThreshold = 5000;
 
-    private List<RpcCallback> callbacks = new ArrayList<>();
-    private ReentrantLock lock = new ReentrantLock();
-
     public RpcFuture(RpcRequest request) {
         this.sync = new Sync();
         this.request = request;
@@ -79,34 +76,11 @@ public class RpcFuture implements Future<Object> {
     public void done(RpcResponse reponse) {
         this.response = reponse;
         sync.release(1);
-        invokeCallbacks();
 
         long responseTime = System.currentTimeMillis() - startTime;
         if (responseTime > this.responseTimeThreshold) {
             logger.warn("Service response time is too slow. Request id = " + reponse.getRequestId() + ". Response Time = " + responseTime + "ms");
         }
-    }
-
-    private void invokeCallbacks() {
-        lock.lock();
-        try {
-            for (final RpcCallback callback : callbacks) {
-                runCallback(callback);
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void runCallback(final RpcCallback callback) {
-        final RpcResponse res = this.response;
-        RpcClient.submit(() -> {
-            if (!res.isError()) {
-                callback.success(res.getResult());
-            } else {
-                callback.fail(new RuntimeException("Response error", new Throwable(res.getError())));
-            }
-        });
     }
 
     static class Sync extends AbstractQueuedSynchronizer {
