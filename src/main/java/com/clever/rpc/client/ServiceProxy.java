@@ -23,7 +23,7 @@ public class ServiceProxy implements InvocationHandler {
         request.setMethodName(method.getName());
         request.setParameterTypes(method.getParameterTypes());
         request.setParameters(args);
-        // Debug
+
         logger.debug(method.getDeclaringClass().getName());
         logger.debug(method.getName());
 
