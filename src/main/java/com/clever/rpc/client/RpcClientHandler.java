@@ -14,9 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author sunbin
  */
 public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
+
     private static final Logger logger = LoggerFactory.getLogger(RpcClientHandler.class);
 
-    private ConcurrentHashMap<String, RpcFuture> pendingRPC = new ConcurrentHashMap<String, RpcFuture>();
+    private ConcurrentHashMap<String, RpcFuture> pendingRPC = new ConcurrentHashMap<>();
 
     private volatile Channel channel;
 
@@ -59,19 +60,21 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
     }
 
     public RpcFuture sendRequest(RpcRequest request) {
-
         CompletableFuture<ChannelFuture> completableFuture = new CompletableFuture<>();
         RpcFuture rpcFuture = new RpcFuture(request);
         pendingRPC.put(request.getRequestId(), rpcFuture);
-        channel.writeAndFlush(request).addListener((ChannelFutureListener) future -> completableFuture.complete(future));
-
-        //取代 CountDownLatch 的 await
-        CompletableFuture.allOf(completableFuture);
+        channel.writeAndFlush(request).addListener((ChannelFutureListener) future -> {
+            completableFuture.complete(future);
+            //取代 CountDownLatch 的 await
+            CompletableFuture.allOf(completableFuture);
 //        try {
 //            latch.await();
 //        } catch (InterruptedException e) {
 //            logger.error(e.getMessage());
 //        }
+        });
+
+
 
         return rpcFuture;
     }
