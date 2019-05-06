@@ -1,5 +1,7 @@
 package com.clever.rpc.client;
 
+import com.clever.rpc.register.ServiceDiscovery;
+
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -15,9 +17,26 @@ public class RpcClient {
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
             600L, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(65536));
 
-    public RpcClient(String serverAddress){
+    public ServiceDiscovery serviceDiscovery;
+
+    /**
+     * Rpc直连
+     *
+     * @param serverAddress
+     */
+    public RpcClient(String serverAddress) {
         ConnectManage.getInstance().initConnection(serverAddress);
     }
+
+    /**
+     * 链接注册中心
+     *
+     * @param serviceDiscovery
+     */
+    public RpcClient(ServiceDiscovery serviceDiscovery) {
+        this.serviceDiscovery = serviceDiscovery;
+    }
+
     /**
      * 创建连接
      *
@@ -33,12 +52,12 @@ public class RpcClient {
         );
     }
 
-    public static void submit(Runnable task) {
-        threadPoolExecutor.submit(task);
-    }
-
+    /**
+     * 关闭链接
+     */
     public void stop() {
         threadPoolExecutor.shutdown();
+        serviceDiscovery.stop();
         ConnectManage.getInstance().stop();
     }
 }

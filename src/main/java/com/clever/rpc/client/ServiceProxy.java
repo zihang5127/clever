@@ -13,7 +13,6 @@ import java.util.UUID;
  * @author sunbin
  */
 public class ServiceProxy implements InvocationHandler {
-    private static final Logger logger = LoggerFactory.getLogger(ServiceProxy.class);
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) {
@@ -23,17 +22,6 @@ public class ServiceProxy implements InvocationHandler {
         request.setMethodName(method.getName());
         request.setParameterTypes(method.getParameterTypes());
         request.setParameters(args);
-
-        logger.debug(method.getDeclaringClass().getName());
-        logger.debug(method.getName());
-
-        for (Class<?> type : method.getParameterTypes()) {
-            logger.debug(type.getName());
-        }
-        for (Object obj : args) {
-            logger.debug(obj.toString());
-        }
-
         RpcClientHandler handler = ConnectManage.getInstance().chooseHandler();
         RpcFuture rpcFuture = handler.sendRequest(request);
         return rpcFuture.get();

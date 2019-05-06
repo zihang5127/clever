@@ -9,8 +9,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -51,8 +55,9 @@ public class ConnectManage {
     }
 
     public void initConnection(String serverAddress) {
-        String host = serverAddress.split(":")[0];
-        int port = Integer.parseInt(serverAddress.split(":")[1]);
+        String[] array = serverAddress.split(":");
+        String host = array[0];
+        int port = Integer.parseInt(array[1]);
         threadPoolExecutor.submit(() -> {
             Bootstrap b = new Bootstrap();
             b.group(eventLoopGroup)
@@ -62,6 +67,48 @@ public class ConnectManage {
             channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
                 if (channelFuture1.isSuccess()) {
                     logger.debug("Connect to remote server");
+                    RpcClientHandler handler = channelFuture1.channel().pipeline().get(RpcClientHandler.class);
+                    addHandler(handler);
+                }
+            });
+        });
+    }
+
+    public void initConnection(Set<String> serverAddress) {
+        if (serverAddress != null && !serverAddress.isEmpty()) {
+            HashSet<InetSocketAddress> serviceNodes = new HashSet<>();
+            for (String address : serverAddress) {
+                String[] array = address.split(":");
+                String host = array[0];
+                int port = Integer.parseInt(array[1]);
+                final InetSocketAddress remotePeer = new InetSocketAddress(host, port);
+                serviceNodes.add(remotePeer);
+            }
+
+            for (final InetSocketAddress socketAddress : serviceNodes) {
+                if (!connectedServerNodes.keySet().contains(socketAddress)) {
+                    connectServerNode(socketAddress);
+                }
+            }
+        }
+    }
+
+    /**
+     * 连接到节点
+     *
+     * @param socketAddress
+     */
+    private void connectServerNode(InetSocketAddress socketAddress) {
+        threadPoolExecutor.submit(() -> {
+            Bootstrap b = new Bootstrap();
+            b.group(eventLoopGroup)
+                    .channel(NioSocketChannel.class)
+                    .handler(new RpcClientInitializer());
+
+            ChannelFuture channelFuture = b.connect(socketAddress);
+            channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
+                if (channelFuture1.isSuccess()) {
+                    logger.debug("Successfully connect to remote server , host :{}",socketAddress);
                     RpcClientHandler handler = channelFuture1.channel().pipeline().get(RpcClientHandler.class);
                     addHandler(handler);
                 }
@@ -123,4 +170,6 @@ public class ConnectManage {
         threadPoolExecutor.shutdown();
         eventLoopGroup.shutdownGracefully();
     }
+
+
 }

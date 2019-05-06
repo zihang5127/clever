@@ -10,11 +10,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class RpcApplication {
     public static void main(String[] args) {
-        try {
-            SpringApplication.run(RpcApplication.class, args).addApplicationListener(new RpcServer());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SpringApplication.run(RpcApplication.class, args).addApplicationListener(new RpcServer());
     }
 }
