@@ -74,8 +74,6 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 //        }
         });
 
-
-
         return rpcFuture;
     }
 
