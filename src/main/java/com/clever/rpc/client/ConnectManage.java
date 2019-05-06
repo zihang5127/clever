@@ -108,7 +108,7 @@ public class ConnectManage {
             ChannelFuture channelFuture = b.connect(socketAddress);
             channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
                 if (channelFuture1.isSuccess()) {
-                    logger.debug("Successfully connect to remote server , host :{}",socketAddress);
+                    logger.debug("Successfully connect to remote server , host :{}", socketAddress);
                     RpcClientHandler handler = channelFuture1.channel().pipeline().get(RpcClientHandler.class);
                     addHandler(handler);
                 }
@@ -123,6 +123,9 @@ public class ConnectManage {
         signalAvailableHandler();
     }
 
+    /**
+     * 唤醒在condition的线程
+     */
     private void signalAvailableHandler() {
         lock.lock();
         try {
@@ -132,6 +135,12 @@ public class ConnectManage {
         }
     }
 
+    /**
+     * 等待，直到被signalAll唤醒
+     *
+     * @return
+     * @throws InterruptedException
+     */
     private boolean waitingForHandler() throws InterruptedException {
         lock.lock();
         try {
