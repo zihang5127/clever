@@ -7,6 +7,6 @@ package com.clever.rpc.common;
  */
 public class Costs {
     public static String ZK_ROOT = "/service";
-    public static String ZK_SERVICE_PROVIDER = "provider";
-    public static String ZK_SERVICE_CONSUMER = "consumer";
+    public static String ZK_SERVICE_PROVIDER = "providers";
+    public static String ZK_SERVICE_CONSUMER = "consumers";
 }
