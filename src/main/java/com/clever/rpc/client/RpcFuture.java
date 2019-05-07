@@ -70,13 +70,13 @@ public class RpcFuture implements Future<Object> {
         throw new UnsupportedOperationException();
     }
 
-    public void done(RpcResponse reponse) {
-        this.response = reponse;
+    public void done(RpcResponse response) {
+        this.response = response;
         sync.release(1);
 
         long responseTime = System.currentTimeMillis() - startTime;
         if (responseTime > this.responseTimeThreshold) {
-            logger.warn("Service response time is too slow. Request id :{}", reponse.getRequestId(), ". Response Time : {}", responseTime + "ms");
+            logger.warn("Service response time is too slow. Request id :{}", response.getRequestId(), ". Response Time : {}", responseTime + "ms");
         }
     }
 
