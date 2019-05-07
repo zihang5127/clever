@@ -14,7 +14,6 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  */
 public class RpcFuture implements Future<Object> {
     private static final Logger logger = LoggerFactory.getLogger(RpcFuture.class);
-
     private Sync sync;
     private RpcRequest request;
     private RpcResponse response;

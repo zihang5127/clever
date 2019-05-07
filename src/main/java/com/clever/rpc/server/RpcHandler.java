@@ -15,11 +15,8 @@ import java.util.Map;
  * @author sunbin
  */
 public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
-
     private static final Logger logger = LoggerFactory.getLogger(RpcHandler.class);
-
     private final Map<String, Object> handlerMap;
-
     public RpcHandler(Map<String, Object> handlerMap) {
         this.handlerMap = handlerMap;
     }

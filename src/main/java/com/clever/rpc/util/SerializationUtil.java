@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author sunbin
  */
 public class SerializationUtil {
-
     private static Map<Class<?>, Schema<?>> cachedSchema = new ConcurrentHashMap<>();
 
     /**

@@ -23,7 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author sunbin
  */
 public class ConnectManage {
-
     private static final Logger logger = LoggerFactory.getLogger(ConnectManage.class);
     private volatile static ConnectManage connectManage;
     private long connectTimeoutMillis = 6000;
@@ -31,10 +30,8 @@ public class ConnectManage {
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
             600L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(65536));
     private volatile boolean isRuning = true;
-
     private CopyOnWriteArrayList<RpcClientHandler> connectedHandlers = new CopyOnWriteArrayList<>();
     private Map<InetSocketAddress, RpcClientHandler> connectedServerNodes = new ConcurrentHashMap<>();
-
     private ReentrantLock lock = new ReentrantLock();
     private Condition connected = lock.newCondition();
     private AtomicInteger roundRobin = new AtomicInteger(0);
@@ -62,6 +59,7 @@ public class ConnectManage {
         String[] array = serverAddress.split(":");
         String host = array[0];
         int port = Integer.parseInt(array[1]);
+
         threadPoolExecutor.submit(() -> {
             Bootstrap b = new Bootstrap();
             b.group(eventLoopGroup)
@@ -185,6 +183,7 @@ public class ConnectManage {
 
     public RpcClientHandler chooseHandler() {
         int size = connectedHandlers.size();
+
         while (isRuning && size <= 0) {
             try {
                 boolean available = waitingForHandler();

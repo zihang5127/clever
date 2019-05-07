@@ -15,13 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author sunbin
  */
 public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
-
     private static final Logger logger = LoggerFactory.getLogger(RpcClientHandler.class);
-
     private ConcurrentHashMap<String, RpcFuture> pendingRPC = new ConcurrentHashMap<>();
-
     private volatile Channel channel;
-
     private SocketAddress remoteAddress;
 
     public SocketAddress getRemoteAddress() {
@@ -34,8 +30,9 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
     /**
      * <p>
-     *     绑定ip和端口后触发
+     * 绑定ip和端口后触发
      * </p>
+     *
      * @param ctx
      * @throws Exception
      */
@@ -47,7 +44,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
     /**
      * <p>
-     *     在ServerSocketChannel对应的pipeline中触发（channelFuture.addListener触发）
+     * 在ServerSocketChannel对应的pipeline中触发（channelFuture.addListener触发）
      * </p>
      *
      * @param ctx
@@ -69,6 +66,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
     public void channelRead0(ChannelHandlerContext ctx, RpcResponse response) {
         String requestId = response.getRequestId();
         RpcFuture rpcFuture = pendingRPC.get(requestId);
+
         if (rpcFuture != null) {
             //删除
             pendingRPC.remove(requestId);
@@ -85,6 +83,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
     public RpcFuture sendRequest(RpcRequest request) {
         CompletableFuture<ChannelFuture> completableFuture = new CompletableFuture<>();
         RpcFuture rpcFuture = new RpcFuture(request);
+
         pendingRPC.put(request.getRequestId(), rpcFuture);
         channel.writeAndFlush(request).addListener((ChannelFutureListener) future -> {
             completableFuture.complete(future);

@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
-
     private static final Logger logger = LoggerFactory.getLogger(RpcServer.class);
 
     /**
@@ -47,10 +46,8 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${rpc.server.port}")
     private int port;
 
-
     @Value("${zk.address}")
     private String registerAddress;
-
 
     @Value("${rpc.topic}")
     private String topic;
@@ -59,7 +56,6 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
      * 注册的接口  暂时是tcp直连 没用到zookeeper
      */
     private Map<String, Object> handlerMap = new HashMap<>();
-
     private static ThreadPoolExecutor threadPoolExecutor;
 
     /**
@@ -138,18 +134,15 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-
             //获取本机ip
             InetAddress inetAddress= InetAddress.getLocalHost();
             String host= inetAddress.getHostAddress();
-
 
             ChannelFuture future = bootstrap.bind(host, port).sync();
             logger.info("Server started on port :{}", port);
 
             //注册
             new ServiceRegistry(registerAddress,port).register(handlerMap,topic,host);
-
             future.channel().closeFuture().sync();
         }
     }

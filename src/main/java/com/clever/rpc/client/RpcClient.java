@@ -13,10 +13,8 @@ import java.util.concurrent.TimeUnit;
  * @author sunbin
  */
 public class RpcClient {
-
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
             600L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(65536));
-
     public ServiceDiscovery serviceDiscovery;
 
     /**

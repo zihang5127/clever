@@ -18,7 +18,6 @@ import java.util.Set;
  * @author sunbin
  */
 public class ServiceDiscovery {
-
     private static final Logger logger = LoggerFactory.getLogger(ServiceDiscovery.class);
 
     /**
@@ -35,7 +34,6 @@ public class ServiceDiscovery {
      * zk topic
      */
     private String topic;
-
 
     public ServiceDiscovery(String registerAddress, String topic, List<Class<?>> services) {
         this.topic = topic;
@@ -96,7 +94,6 @@ public class ServiceDiscovery {
      * 服务发现
      */
     public void discovery() {
-
         updateServerHandler();
 
         //监听子节点

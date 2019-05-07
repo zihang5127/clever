@@ -15,9 +15,7 @@ import java.util.Map;
  * @author sunbin
  */
 public class ServiceRegistry {
-
     private static final Logger logger = LoggerFactory.getLogger(ServiceRegistry.class);
-
     private String registerAddress;
     private int port;
 

@@ -10,9 +10,7 @@ import java.util.List;
  * @author sunbin
  */
 public class RpcDecoder extends ByteToMessageDecoder {
-
     private Class<?> genericClass;
-
     public RpcDecoder(Class<?> genericClass) {
         this.genericClass = genericClass;
     }
@@ -30,7 +28,6 @@ public class RpcDecoder extends ByteToMessageDecoder {
         }
         byte[] data = new byte[dataLength];
         in.readBytes(data);
-
         Object obj = SerializationUtil.deserialize(data, genericClass);
         out.add(obj);
     }
