@@ -61,7 +61,7 @@ public class ServiceDiscovery {
      */
     public void register() {
         String rootPath = Costs.ZK_ROOT;
-        String customerPath = Costs.ZK_SERVICE_CUSTOMER;
+        String consumerPath = Costs.ZK_SERVICE_CONSUMER;
         boolean rootExists = zkClient.exists(rootPath);
         //创建根
         if (!rootExists) {
@@ -83,18 +83,18 @@ public class ServiceDiscovery {
                 if (!topicExists) {
                     zkClient.createPersistent(rootPath + "/" + topic + "/" + serviceName);
                 }
-                boolean serviceExist = zkClient.exists(rootPath + "/" + topic + "/" + serviceName + "/" + customerPath);
+                boolean serviceExist = zkClient.exists(rootPath + "/" + topic + "/" + serviceName + "/" + consumerPath);
                 if (!serviceExist) {
-                    zkClient.createPersistent(rootPath + "/" + topic + "/" + serviceName + "/" + customerPath);
+                    zkClient.createPersistent(rootPath + "/" + topic + "/" + serviceName + "/" + consumerPath);
                 }
                 //注册
-                String path = rootPath + "/" + topic + "/" + serviceName + "/" + customerPath + "/" + host;
+                String path = rootPath + "/" + topic + "/" + serviceName + "/" + consumerPath + "/" + host;
                 if(!zkClient.exists(path)){
                     zkClient.createEphemeral(path);
                 }
-                logger.info("Service customer registry Success service :{}", serviceName);
+                logger.info("Service consumer registry Success service :{}", serviceName);
             } catch (UnknownHostException e) {
-                logger.error("Service customer registry failed service :{}", serviceName, e);
+                logger.error("Service consumer registry failed service :{}", serviceName, e);
             }
         }
     }
