@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 public class RpcClient {
 
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
-            600L, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(65536));
+            600L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(65536));
 
     public ServiceDiscovery serviceDiscovery;
 
@@ -44,11 +44,11 @@ public class RpcClient {
      * @param <T>
      * @return
      */
-    public <T> T create(Class<T> interfaceClass) {
+    public <T> T create(Class<T> interfaceClass,long timeout) {
         return (T) Proxy.newProxyInstance(
                 interfaceClass.getClassLoader(),
                 new Class<?>[]{interfaceClass},
-                new ServiceProxy()
+                new ServiceProxy(timeout)
         );
     }
 
