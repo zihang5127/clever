@@ -28,7 +28,6 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
         return remoteAddress;
     }
 
-
     public Channel getChannel() {
         return channel;
     }

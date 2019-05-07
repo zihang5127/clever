@@ -4,6 +4,7 @@ import com.clever.rpc.pojo.RpcResponse;
 import com.clever.rpc.coder.RpcDecoder;
 import com.clever.rpc.coder.RpcEncoder;
 import com.clever.rpc.pojo.RpcRequest;
+import com.clever.rpc.register.ServiceRegistry;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -22,6 +23,8 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -41,8 +44,16 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
     /**
      * 服务地址
      */
-    @Value("${server.address}")
-    private String serverAddress;
+    @Value("${rpc.server.port}")
+    private int port;
+
+
+    @Value("${zk.address}")
+    private String registerAddress;
+
+
+    @Value("${rpc.topic}")
+    private String topic;
 
     /**
      * 注册的接口  暂时是tcp直连 没用到zookeeper
@@ -82,7 +93,7 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
 
             //启动
             start();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | UnknownHostException e) {
             logger.error("RpcServer failed", e);
         }
     }
@@ -108,7 +119,7 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
      *
      * @throws Exception
      */
-    public void start() throws InterruptedException {
+    public void start() throws InterruptedException, UnknownHostException {
         if (bossGroup == null && workerGroup == null) {
             bossGroup = new NioEventLoopGroup();
             workerGroup = new NioEventLoopGroup();
@@ -127,12 +138,17 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            String[] array = serverAddress.split(":");
-            String host = array[0];
-            int port = Integer.parseInt(array[1]);
+
+            //获取本机ip
+            InetAddress inetAddress= InetAddress.getLocalHost();
+            String host= inetAddress.getHostAddress();
+
 
             ChannelFuture future = bootstrap.bind(host, port).sync();
-            logger.info("Server started on port {}", port);
+            logger.info("Server started on port :{}", port);
+
+            //注册
+            new ServiceRegistry(registerAddress,port).register(handlerMap,topic,host);
 
             future.channel().closeFuture().sync();
         }

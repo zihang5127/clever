@@ -33,7 +33,7 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
     @Override
     public void channelRead0(final ChannelHandlerContext ctx, final RpcRequest request) {
         RpcServer.submit(() -> {
-            logger.debug("Receive request " + request.getRequestId());
+            logger.debug("Receive request :{}", request.getRequestId());
             RpcResponse response = new RpcResponse();
             response.setRequestId(request.getRequestId());
             try {
@@ -45,7 +45,7 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
             }
 
             //写入并且冲刷缓冲区
-            ctx.writeAndFlush(response).addListener((ChannelFutureListener) channelFuture -> logger.debug("Send response for request " + request.getRequestId()));
+            ctx.writeAndFlush(response);
         });
     }
 
@@ -59,22 +59,10 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
     private Object handle(RpcRequest request) throws Throwable {
         String className = request.getClassName();
         Object serviceBean = handlerMap.get(className);
-
         Class<?> serviceClass = serviceBean.getClass();
         String methodName = request.getMethodName();
         Class<?>[] parameterTypes = request.getParameterTypes();
         Object[] parameters = request.getParameters();
-
-        logger.debug(serviceClass.getName());
-        logger.debug(methodName);
-
-        for(Class<?> type : parameterTypes){
-            logger.debug(type.getName());
-        }
-        for(Object obj : parameters){
-            logger.debug(obj.toString());
-        }
-
         FastClass serviceFastClass = FastClass.create(serviceClass);
         int methodIndex = serviceFastClass.getIndex(methodName, parameterTypes);
         return serviceFastClass.invoke(methodIndex, serviceBean, parameters);

@@ -10,7 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -50,9 +53,15 @@ public class ConnectManage {
         return connectManage;
     }
 
+    /**
+     * Rpc直连
+     *
+     * @param serverAddress
+     */
     public void initConnection(String serverAddress) {
-        String host = serverAddress.split(":")[0];
-        int port = Integer.parseInt(serverAddress.split(":")[1]);
+        String[] array = serverAddress.split(":");
+        String host = array[0];
+        int port = Integer.parseInt(array[1]);
         threadPoolExecutor.submit(() -> {
             Bootstrap b = new Bootstrap();
             b.group(eventLoopGroup)
@@ -69,6 +78,77 @@ public class ConnectManage {
         });
     }
 
+    /**
+     * 更新Rpc链接
+     *
+     * @param serverAddress
+     */
+    public void updateConnectedServer(Set<String> serverAddress) {
+        if (serverAddress != null && !serverAddress.isEmpty()) {
+            HashSet<InetSocketAddress> newServiceNodes = new HashSet<>();
+            for (String address : serverAddress) {
+                String[] array = address.split(":");
+                String host = array[0];
+                int port = Integer.parseInt(array[1]);
+                final InetSocketAddress remotePeer = new InetSocketAddress(host, port);
+                newServiceNodes.add(remotePeer);
+            }
+
+            for (final InetSocketAddress socketAddress : newServiceNodes) {
+                if (!connectedServerNodes.keySet().contains(socketAddress)) {
+                    connectServerNode(socketAddress);
+                }
+            }
+
+            //删除失效的链接
+            for (RpcClientHandler connectedServerHandler : connectedHandlers) {
+                SocketAddress remoteNode = connectedServerHandler.getRemoteAddress();
+                if (!newServiceNodes.contains(remoteNode)) {
+                    logger.info("Remove server invalid  node :{}" + remoteNode);
+                    RpcClientHandler handler = connectedServerNodes.get(remoteNode);
+                    if (handler != null) {
+                        handler.close();
+                    }
+                    connectedServerNodes.remove(remoteNode);
+                    connectedHandlers.remove(connectedServerHandler);
+                }
+            }
+        } else {
+            //所有服务都失效
+            logger.error("No available server node. Close all handler");
+            for (final RpcClientHandler connectedServerHandler : connectedHandlers) {
+                SocketAddress remotePeer = connectedServerHandler.getRemoteAddress();
+                RpcClientHandler handler = connectedServerNodes.get(remotePeer);
+                handler.close();
+                connectedServerNodes.remove(connectedServerHandler);
+            }
+            connectedHandlers.clear();
+        }
+    }
+
+    /**
+     * 连接到节点
+     *
+     * @param socketAddress
+     */
+    private void connectServerNode(InetSocketAddress socketAddress) {
+        threadPoolExecutor.submit(() -> {
+            Bootstrap b = new Bootstrap();
+            b.group(eventLoopGroup)
+                    .channel(NioSocketChannel.class)
+                    .handler(new RpcClientInitializer());
+
+            ChannelFuture channelFuture = b.connect(socketAddress);
+            channelFuture.addListener((ChannelFutureListener) channelFuture1 -> {
+                if (channelFuture1.isSuccess()) {
+                    logger.debug("Successfully connect to remote server , host :{}", socketAddress);
+                    RpcClientHandler handler = channelFuture1.channel().pipeline().get(RpcClientHandler.class);
+                    addHandler(handler);
+                }
+            });
+        });
+    }
+
     private void addHandler(RpcClientHandler handler) {
         connectedHandlers.add(handler);
         InetSocketAddress remoteAddress = (InetSocketAddress) handler.getChannel().remoteAddress();
@@ -76,6 +156,9 @@ public class ConnectManage {
         signalAvailableHandler();
     }
 
+    /**
+     * 唤醒在condition的线程
+     */
     private void signalAvailableHandler() {
         lock.lock();
         try {
@@ -85,6 +168,12 @@ public class ConnectManage {
         }
     }
 
+    /**
+     * 等待，直到被signalAll唤醒
+     *
+     * @return
+     * @throws InterruptedException
+     */
     private boolean waitingForHandler() throws InterruptedException {
         lock.lock();
         try {
@@ -123,4 +212,6 @@ public class ConnectManage {
         threadPoolExecutor.shutdown();
         eventLoopGroup.shutdownGracefully();
     }
+
+
 }

@@ -5,12 +5,9 @@ import com.clever.rpc.pojo.RpcResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author sunbin
@@ -23,9 +20,6 @@ public class RpcFuture implements Future<Object> {
     private RpcResponse response;
     private long startTime;
     private long responseTimeThreshold = 5000;
-
-    private List<RpcCallback> callbacks = new ArrayList<>();
-    private ReentrantLock lock = new ReentrantLock();
 
     public RpcFuture(RpcRequest request) {
         this.sync = new Sync();
@@ -76,37 +70,14 @@ public class RpcFuture implements Future<Object> {
         throw new UnsupportedOperationException();
     }
 
-    public void done(RpcResponse reponse) {
-        this.response = reponse;
+    public void done(RpcResponse response) {
+        this.response = response;
         sync.release(1);
-        invokeCallbacks();
 
         long responseTime = System.currentTimeMillis() - startTime;
         if (responseTime > this.responseTimeThreshold) {
-            logger.warn("Service response time is too slow. Request id = " + reponse.getRequestId() + ". Response Time = " + responseTime + "ms");
+            logger.warn("Service response time is too slow. Request id :{}", response.getRequestId(), ". Response Time : {}", responseTime + "ms");
         }
-    }
-
-    private void invokeCallbacks() {
-        lock.lock();
-        try {
-            for (final RpcCallback callback : callbacks) {
-                runCallback(callback);
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void runCallback(final RpcCallback callback) {
-        final RpcResponse res = this.response;
-        RpcClient.submit(() -> {
-            if (!res.isError()) {
-                callback.success(res.getResult());
-            } else {
-                callback.fail(new RuntimeException("Response error", new Throwable(res.getError())));
-            }
-        });
     }
 
     static class Sync extends AbstractQueuedSynchronizer {
@@ -145,7 +116,6 @@ public class RpcFuture implements Future<Object> {
         }
 
         public boolean isDone() {
-            getState();
             return getState() == done;
         }
     }
