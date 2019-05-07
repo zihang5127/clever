@@ -7,6 +7,7 @@ import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,12 +22,21 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
     private volatile Channel channel;
 
+    private SocketAddress remoteAddress;
+
+    public SocketAddress getRemoteAddress() {
+        return remoteAddress;
+    }
+
+
+
     public Channel getChannel() {
         return channel;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        this.remoteAddress = this.channel.remoteAddress();
         super.channelActive(ctx);
     }
 

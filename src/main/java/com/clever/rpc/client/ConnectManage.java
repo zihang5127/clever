@@ -9,9 +9,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +53,11 @@ public class ConnectManage {
         return connectManage;
     }
 
+    /**
+     * Rpc直连
+     *
+     * @param serverAddress
+     */
     public void initConnection(String serverAddress) {
         String[] array = serverAddress.split(":");
         String host = array[0];
@@ -74,22 +78,51 @@ public class ConnectManage {
         });
     }
 
-    public void initConnection(Set<String> serverAddress) {
+    /**
+     * 更新Rpc链接
+     *
+     * @param serverAddress
+     */
+    public void updateConnectedServer(Set<String> serverAddress) {
         if (serverAddress != null && !serverAddress.isEmpty()) {
-            HashSet<InetSocketAddress> serviceNodes = new HashSet<>();
+            HashSet<InetSocketAddress> newServiceNodes = new HashSet<>();
             for (String address : serverAddress) {
                 String[] array = address.split(":");
                 String host = array[0];
                 int port = Integer.parseInt(array[1]);
                 final InetSocketAddress remotePeer = new InetSocketAddress(host, port);
-                serviceNodes.add(remotePeer);
+                newServiceNodes.add(remotePeer);
             }
 
-            for (final InetSocketAddress socketAddress : serviceNodes) {
+            for (final InetSocketAddress socketAddress : newServiceNodes) {
                 if (!connectedServerNodes.keySet().contains(socketAddress)) {
                     connectServerNode(socketAddress);
                 }
             }
+
+            //删除失效的链接
+            for (RpcClientHandler connectedServerHandler : connectedHandlers) {
+                SocketAddress remoteNode = connectedServerHandler.getRemoteAddress();
+                if (!newServiceNodes.contains(remoteNode)) {
+                    logger.info("Remove server invalid  node :{}" + remoteNode);
+                    RpcClientHandler handler = connectedServerNodes.get(remoteNode);
+                    if (handler != null) {
+                        handler.close();
+                    }
+                    connectedServerNodes.remove(remoteNode);
+                    connectedHandlers.remove(connectedServerHandler);
+                }
+            }
+        } else {
+            //所有服务都失效
+            logger.error("No available server node. Close all handler");
+            for (final RpcClientHandler connectedServerHandler : connectedHandlers) {
+                SocketAddress remotePeer = connectedServerHandler.getRemoteAddress();
+                RpcClientHandler handler = connectedServerNodes.get(remotePeer);
+                handler.close();
+                connectedServerNodes.remove(connectedServerHandler);
+            }
+            connectedHandlers.clear();
         }
     }
 

@@ -36,10 +36,6 @@ public class ServiceDiscovery {
      */
     private String topic;
 
-    /**
-     * 生产者服务节点
-     */
-    private Set<String> serverHandler = new HashSet<>();
 
     public ServiceDiscovery(String registerAddress, String topic, List<Class<?>> services) {
         this.topic = topic;
@@ -51,9 +47,6 @@ public class ServiceDiscovery {
 
         //服务发现
         discovery();
-
-        //链接节点
-        ConnectManage.getInstance().initConnection(serverHandler);
     }
 
     /**
@@ -89,7 +82,7 @@ public class ServiceDiscovery {
                 }
                 //注册
                 String path = rootPath + "/" + topic + "/" + serviceName + "/" + consumerPath + "/" + host;
-                if(!zkClient.exists(path)){
+                if (!zkClient.exists(path)) {
                     zkClient.createEphemeral(path);
                 }
                 logger.info("Service consumer registry Success service :{}", serviceName);
@@ -103,12 +96,31 @@ public class ServiceDiscovery {
      * 服务发现
      */
     public void discovery() {
+
+        updateServerHandler();
+
+        //监听子节点
+        for (Class<?> cls : services) {
+            String path = Costs.ZK_ROOT + "/" + topic + "/" + cls.getName() + "/" + Costs.ZK_SERVICE_PROVIDER;
+            zkClient.subscribeChildChanges(path, (s, list) -> discovery());
+        }
+    }
+
+    /**
+     * 更新链接
+     */
+    private void updateServerHandler() {
+
+        Set<String> socketAddress = new HashSet<>();
         for (String serviceName : zkClient.getChildren(Costs.ZK_ROOT + "/" + topic)) {
             List<String> ips = zkClient.getChildren(Costs.ZK_ROOT + "/" + topic + "/" + serviceName + "/" + Costs.ZK_SERVICE_PROVIDER);
-            for (String ip : ips) {
-                serverHandler.add(ip);
+            for (String remote : ips) {
+                socketAddress.add(remote);
             }
         }
+
+        //连接远程Node
+        ConnectManage.getInstance().updateConnectedServer(socketAddress);
     }
 
     /**

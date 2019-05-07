@@ -29,7 +29,7 @@ public class RpcClient {
     }
 
     /**
-     * 链接注册中心
+     * 连接注册中心
      *
      * @param serviceDiscovery
      */
