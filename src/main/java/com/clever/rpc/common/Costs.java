@@ -11,7 +11,7 @@ public class Costs {
 
     public static String ZK_SERVICE_PROVIDER = "provider";
 
-    public static String ZK_SERVICE_CUSTOMER = "customer";
+    public static String ZK_SERVICE_CUSTOMER = "consumer";
 
 
 }
