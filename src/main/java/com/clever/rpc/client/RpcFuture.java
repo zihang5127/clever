@@ -72,6 +72,8 @@ public class RpcFuture implements Future<Object> {
 
     public void done(RpcResponse response) {
         this.response = response;
+
+        //释放锁
         sync.release(1);
 
         long responseTime = System.currentTimeMillis() - startTime;
@@ -80,6 +82,9 @@ public class RpcFuture implements Future<Object> {
         }
     }
 
+    /**
+     * AQS
+     */
     static class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 1L;
 

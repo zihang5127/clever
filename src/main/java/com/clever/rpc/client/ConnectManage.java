@@ -160,6 +160,7 @@ public class ConnectManage {
     private void signalAvailableHandler() {
         lock.lock();
         try {
+            //唤醒所有在Condition阻塞队列中的线程，让其继续执行
             connected.signalAll();
         } finally {
             lock.unlock();
@@ -167,7 +168,7 @@ public class ConnectManage {
     }
 
     /**
-     * 等待，直到被signalAll唤醒
+     * 等待，直到被signal/signalAll唤醒
      *
      * @return
      * @throws InterruptedException
@@ -175,6 +176,7 @@ public class ConnectManage {
     private boolean waitingForHandler() throws InterruptedException {
         lock.lock();
         try {
+            //当前线程添加到Condition阻塞队，线程被阻塞不会继续执行
             return connected.await(this.connectTimeoutMillis, TimeUnit.MILLISECONDS);
         } finally {
             lock.unlock();
