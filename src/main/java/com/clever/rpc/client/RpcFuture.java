@@ -80,7 +80,6 @@ public class RpcFuture implements Future<Object> {
     }
 
     static class Sync extends AbstractQueuedSynchronizer {
-
         private static final long serialVersionUID = 1L;
 
         /**
