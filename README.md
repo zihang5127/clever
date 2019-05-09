@@ -25,6 +25,9 @@ public class HelloServiceImpl implements HelloService {
 }
 ```
 4. Run zookeeper
+```
+For example: zookeeper is running on 127.0.0.1:2181
+```
 5. Start server:
 ```java
 @SpringBootApplication
