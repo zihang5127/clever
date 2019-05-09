@@ -36,5 +36,4 @@ public class ServiceProxy implements InvocationHandler {
         RpcFuture rpcFuture = handler.sendRequest(request);
         return rpcFuture.get(timeout,TimeUnit.MILLISECONDS);
     }
-
 }
