@@ -17,11 +17,6 @@ public class ServiceProxy implements InvocationHandler {
      * 请求超时时间
      */
     private long timeout;
-
-    /**
-     *
-     * @param timeout
-     */
     private Class<?> interfaceClass;
 
     public ServiceProxy(long timeout,Class<?> interfaceClass) {
