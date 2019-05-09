@@ -36,7 +36,7 @@ public class RpcClient {
     }
 
     /**
-     * 创建连接
+     * 创建代理类
      *
      * @param interfaceClass
      * @param <T>
