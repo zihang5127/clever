@@ -2,6 +2,7 @@ package com.clever.rpc;
 
 import com.clever.rpc.client.RpcClient;
 import com.clever.rpc.register.ServiceDiscovery;
+import com.clever.rpc.service.HelloService;
 import com.clever.rpc.service.UserService;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ public class RPCTest {
         //注册的消费者列表
         List<Class<?>> classes = new ArrayList<>();
         classes.add(UserService.class);
+        classes.add(HelloService.class);
         RpcClient rpcClient = null;
 
 

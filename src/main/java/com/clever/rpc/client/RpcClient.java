@@ -46,7 +46,7 @@ public class RpcClient {
         return (T) Proxy.newProxyInstance(
                 interfaceClass.getClassLoader(),
                 new Class<?>[]{interfaceClass},
-                new ServiceProxy(timeout)
+                new ServiceProxy(timeout,interfaceClass)
         );
     }
 

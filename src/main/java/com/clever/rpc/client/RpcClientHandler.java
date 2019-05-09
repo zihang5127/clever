@@ -20,12 +20,22 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<RpcResponse> {
     private volatile Channel channel;
     private SocketAddress remoteAddress;
 
+    private String serviceName;
+
     public SocketAddress getRemoteAddress() {
         return remoteAddress;
     }
 
     public Channel getChannel() {
         return channel;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 
     /**

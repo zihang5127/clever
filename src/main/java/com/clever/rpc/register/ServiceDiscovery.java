@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 服务发现
@@ -108,11 +106,14 @@ public class ServiceDiscovery {
      */
     private void updateServerHandler() {
 
-        Set<String> socketAddress = new HashSet<>();
+        Map<String,Set<String>> socketAddress = new HashMap<>();
+
         for (String serviceName : zkClient.getChildren(Costs.ZK_ROOT + "/" + topic)) {
             List<String> ips = zkClient.getChildren(Costs.ZK_ROOT + "/" + topic + "/" + serviceName + "/" + Costs.ZK_SERVICE_PROVIDER);
+            Set<String> address = new HashSet<>();
             for (String remote : ips) {
-                socketAddress.add(remote);
+                address.add(remote);
+                socketAddress.put(serviceName,address);
             }
         }
 

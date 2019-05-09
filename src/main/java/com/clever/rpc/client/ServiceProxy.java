@@ -18,8 +18,15 @@ public class ServiceProxy implements InvocationHandler {
      */
     private long timeout;
 
-    public ServiceProxy(long timeout) {
+    /**
+     *
+     * @param timeout
+     */
+    private Class<?> interfaceClass;
+
+    public ServiceProxy(long timeout,Class<?> interfaceClass) {
         this.timeout = timeout;
+        this.interfaceClass = interfaceClass;
     }
 
     @Override
@@ -30,7 +37,7 @@ public class ServiceProxy implements InvocationHandler {
         request.setMethodName(method.getName());
         request.setParameterTypes(method.getParameterTypes());
         request.setParameters(args);
-        RpcClientHandler handler = ConnectManage.getInstance().chooseHandler();
+        RpcClientHandler handler = ConnectManage.getInstance().chooseHandler(interfaceClass.getName());
         RpcFuture rpcFuture = handler.sendRequest(request);
         return rpcFuture.get(timeout,TimeUnit.MILLISECONDS);
     }

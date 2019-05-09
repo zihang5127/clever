@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * @author sunbin
@@ -30,17 +32,19 @@ public class ConnectManage {
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
             600L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(65536));
     private volatile boolean isRuning = true;
+    private static final int INDEX_MIN_VALUE = 1;
+    private Map<String, CopyOnWriteArrayList<RpcClientHandler>> connectedHandlersMap = new HashMap<>();
 
     /**
      * <p>
-     *      CopyOnWrite容器即写时复制的容器。通俗的理解是当我们往一个容器添加元素的时候，不直接往当前容器添加，而是
-     *      先将当前容器进行Copy，复制出一个新的容器，然后新的容器里添加元素，添加完元素之后，再将原容器的引用指向
-     *      新的容器。这样做的好处是我们可以对CopyOnWrite容器进行并发的读，而不需要加锁，因为当前容器不会添加任何
-     *      元素。所以CopyOnWrite容器也是一种读写分离的思想，读和写不同的容器
+     * CopyOnWrite容器即写时复制的容器。通俗的理解是当我们往一个容器添加元素的时候，不直接往当前容器添加，而是
+     * 先将当前容器进行Copy，复制出一个新的容器，然后新的容器里添加元素，添加完元素之后，再将原容器的引用指向
+     * 新的容器。这样做的好处是我们可以对CopyOnWrite容器进行并发的读，而不需要加锁，因为当前容器不会添加任何
+     * 元素。所以CopyOnWrite容器也是一种读写分离的思想，读和写不同的容器
      * </p>
      */
-    private CopyOnWriteArrayList<RpcClientHandler> connectedHandlers = new CopyOnWriteArrayList<>();
-    private Map<InetSocketAddress, RpcClientHandler> connectedServerNodes = new ConcurrentHashMap<>();
+    private CopyOnWriteArrayList<RpcClientHandler> connectedHandlers;
+    private Map<String, RpcClientHandler> connectedServerNodes = new ConcurrentHashMap<>();
     private ReentrantLock lock = new ReentrantLock();
     private Condition connected = lock.newCondition();
     private AtomicInteger roundRobin = new AtomicInteger(0);
@@ -88,48 +92,70 @@ public class ConnectManage {
     /**
      * 更新Rpc链接
      *
-     * @param serverAddress
+     * @param serverAddressMap
      */
-    public void updateConnectedServer(Set<String> serverAddress) {
-        if (serverAddress != null && !serverAddress.isEmpty()) {
-            HashSet<InetSocketAddress> newServiceNodes = new HashSet<>();
-            for (String address : serverAddress) {
-                String[] array = address.split(":");
-                String host = array[0];
-                int port = Integer.parseInt(array[1]);
-                final InetSocketAddress remotePeer = new InetSocketAddress(host, port);
-                newServiceNodes.add(remotePeer);
+    public void updateConnectedServer(Map<String, Set<String>> serverAddressMap) {
+        if (serverAddressMap != null && !serverAddressMap.isEmpty()) {
+            Map<String, Set<InetSocketAddress>> newServiceNodesMap = new HashMap<>();
+            for (Map.Entry<String, Set<String>> entry : serverAddressMap.entrySet()) {
+                Set<String> serverAddress = entry.getValue();
+                Set<InetSocketAddress> newServiceNode = new HashSet<>();
+                for (String address : serverAddress) {
+                    String[] array = address.split(":");
+                    String host = array[0];
+                    int port = Integer.parseInt(array[1]);
+                    final InetSocketAddress remotePeer = new InetSocketAddress(host, port);
+                    newServiceNode.add(remotePeer);
+                }
+                newServiceNodesMap.put(entry.getKey(), newServiceNode);
             }
 
-            for (final InetSocketAddress socketAddress : newServiceNodes) {
-                if (!connectedServerNodes.keySet().contains(socketAddress)) {
-                    connectServerNode(socketAddress);
+            for (Map.Entry<String, Set<InetSocketAddress>> entry : newServiceNodesMap.entrySet()) {
+                connectedHandlers = new CopyOnWriteArrayList<>();
+                for (final InetSocketAddress socketAddress : entry.getValue()) {
+                    if (!connectedServerNodes.keySet().contains(entry.getKey()) || !entry.getValue().contains(connectedServerNodes.get(entry.getKey()).getRemoteAddress())) {
+                        connectServerNode(entry.getKey(), socketAddress);
+                    }
                 }
             }
 
             //删除失效的链接
-            for (RpcClientHandler connectedServerHandler : connectedHandlers) {
-                SocketAddress remoteNode = connectedServerHandler.getRemoteAddress();
-                if (!newServiceNodes.contains(remoteNode)) {
-                    logger.info("Remove server invalid  node :{}" + remoteNode);
-                    RpcClientHandler handler = connectedServerNodes.get(remoteNode);
-                    if (handler != null) {
-                        handler.close();
+            for (Map.Entry<String, CopyOnWriteArrayList<RpcClientHandler>> oldConnectedHandlers : connectedHandlersMap.entrySet()) {
+                for (RpcClientHandler oldConnectedServerHandler : oldConnectedHandlers.getValue()) {
+                    SocketAddress oldRemoteNode = oldConnectedServerHandler.getRemoteAddress();
+                    String serviceName = oldConnectedServerHandler.getServiceName();
+                    for (Map.Entry<String, Set<InetSocketAddress>> newInetSocketAddress : newServiceNodesMap.entrySet()) {
+                        if (serviceName.equals(newInetSocketAddress.getKey()) && !newInetSocketAddress.getValue().contains(oldRemoteNode)) {
+                            logger.info("Remove server invalid  node :{}" + oldRemoteNode);
+                            RpcClientHandler handler = connectedServerNodes.get(oldRemoteNode);
+                            if (handler != null) {
+                                handler.close();
+                            }
+                            connectedServerNodes.remove(oldRemoteNode);
+                            oldConnectedHandlers.getValue().remove(oldConnectedServerHandler);
+                        }
                     }
-                    connectedServerNodes.remove(remoteNode);
-                    connectedHandlers.remove(connectedServerHandler);
                 }
             }
         } else {
             //所有服务都失效
             logger.error("No available server node. Close all handler");
-            for (final RpcClientHandler connectedServerHandler : connectedHandlers) {
-                SocketAddress remotePeer = connectedServerHandler.getRemoteAddress();
-                RpcClientHandler handler = connectedServerNodes.get(remotePeer);
-                handler.close();
-                connectedServerNodes.remove(connectedServerHandler);
+            for (Map.Entry<String, CopyOnWriteArrayList<RpcClientHandler>> entry : connectedHandlersMap.entrySet()) {
+                if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                    entry.getValue().forEach(connectedServerHandler -> {
+                        RpcClientHandler handler = connectedServerNodes.get(connectedServerHandler.getServiceName());
+                        handler.close();
+                        connectedServerNodes.remove(connectedServerHandler.getServiceName());
+                    });
+                }
+//                for (final RpcClientHandler connectedServerHandler : entry.getValue()) {
+////                    SocketAddress remotePeer = connectedServerHandler.getRemoteAddress();
+//                    RpcClientHandler handler = connectedServerNodes.get(connectedServerHandler.getServiceName());
+//                    handler.close();
+//                    connectedServerNodes.remove(connectedServerHandler.getServiceName());
+//                }
+                entry.getValue().clear();
             }
-            connectedHandlers.clear();
         }
     }
 
@@ -138,7 +164,7 @@ public class ConnectManage {
      *
      * @param socketAddress
      */
-    private void connectServerNode(InetSocketAddress socketAddress) {
+    private void connectServerNode(String serviceName, InetSocketAddress socketAddress) {
         threadPoolExecutor.submit(() -> {
             Bootstrap b = new Bootstrap();
             b.group(eventLoopGroup)
@@ -150,6 +176,7 @@ public class ConnectManage {
                 if (channelFuture1.isSuccess()) {
                     logger.debug("Successfully connect to remote server , host :{}", socketAddress);
                     RpcClientHandler handler = channelFuture1.channel().pipeline().get(RpcClientHandler.class);
+                    handler.setServiceName(serviceName);
                     addHandler(handler);
                 }
             });
@@ -157,9 +184,10 @@ public class ConnectManage {
     }
 
     private void addHandler(RpcClientHandler handler) {
+        String serviceName = handler.getServiceName();
         connectedHandlers.add(handler);
-        InetSocketAddress remoteAddress = (InetSocketAddress) handler.getChannel().remoteAddress();
-        connectedServerNodes.put(remoteAddress, handler);
+        connectedHandlersMap.put(serviceName, connectedHandlers);
+        connectedServerNodes.put(serviceName, handler);
         signalAvailableHandler();
     }
 
@@ -192,22 +220,40 @@ public class ConnectManage {
         }
     }
 
-    public RpcClientHandler chooseHandler() {
-        int size = connectedHandlers.size();
+
+    /**
+     * 轮询获取服务节点索引
+     *
+     * @param size
+     * @return
+     */
+    private AtomicInteger getIndex(int size) {
+        if (this.roundRobin.getAndAdd(1) > size) {
+            this.roundRobin.set(INDEX_MIN_VALUE);
+        }
+        return this.roundRobin;
+    }
+
+    public RpcClientHandler chooseHandler(String serviceName) {
+        int size = 0;
+
+        if (connectedHandlersMap.get(serviceName) != null) {
+            size = connectedHandlersMap.get(serviceName).size();
+        }
 
         while (isRuning && size <= 0) {
             try {
                 boolean available = waitingForHandler();
                 if (available) {
-                    size = connectedHandlers.size();
+                    size = connectedHandlersMap.get(serviceName).size();
                 }
             } catch (InterruptedException e) {
                 logger.error("Get available node Failed", e);
                 throw new RuntimeException("Can't connect any servers!", e);
             }
         }
-        int index = (roundRobin.getAndAdd(1) + size) % size;
-        return connectedHandlers.get(index);
+        int index = (getIndex(size).get() + size) % size;
+        return connectedHandlersMap.get(serviceName).get(index);
     }
 
     /**
@@ -215,8 +261,8 @@ public class ConnectManage {
      */
     public void stop() {
         isRuning = false;
-        if (connectedHandlers != null && connectedHandlers.size() > 0) {
-            connectedHandlers.forEach(RpcClientHandler::close);
+        if (connectedHandlersMap != null && connectedHandlersMap.size() > 0) {
+            connectedHandlersMap.forEach((k, v) -> v.forEach(RpcClientHandler::close));
         }
         signalAvailableHandler();
         threadPoolExecutor.shutdown();
