@@ -126,7 +126,7 @@ public class ConnectManage {
                     String oldServiceName = oldConnectedServerHandler.getServiceName();
                     for (Map.Entry<String, Set<InetSocketAddress>> newInetSocketAddress : newServiceNodesMap.entrySet()) {
                         if (oldServiceName.equals(newInetSocketAddress.getKey()) && !newInetSocketAddress.getValue().contains(oldRemoteNode)) {
-                            logger.info("Remove server invalid  node :{}" + oldRemoteNode);
+                            logger.info("Remove server invalid node :{}" + oldRemoteNode);
                             RpcClientHandler handler = connectedServerNodes.get(oldServiceName);
                             if (handler != null) {
                                 handler.close();
