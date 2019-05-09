@@ -10,6 +10,6 @@ import com.clever.rpc.service.UserService;
 public class UserServiceImpl implements UserService {
     @Override
     public String findById(Long id) {
-        return "123123";
+        return "User Id : " + id;
     }
 }
