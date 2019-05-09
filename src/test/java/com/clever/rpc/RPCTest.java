@@ -17,7 +17,7 @@ public class RPCTest {
         classes.add(HelloService.class);
         RpcClient rpcClient = null;
 
-        ServiceDiscovery serviceDiscovery = new ServiceDiscovery("127.0.0.1", "rpc", classes);
+        ServiceDiscovery serviceDiscovery = new ServiceDiscovery("127.0.0.1:2181", "rpc", classes);
         try {
             rpcClient = new RpcClient(serviceDiscovery);
             UserService syncClient = rpcClient.create(UserService.class,6000l);

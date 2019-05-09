@@ -45,11 +45,10 @@ public class RPCTest {
     public static void main(String[] args) {
         List<Class<?>> classes = new ArrayList<>();
         classes.add(HelloService.class);
-        RpcClient rpcClient = null;
 
         try {
-            ServiceDiscovery serviceDiscovery = new ServiceDiscovery("127.0.0.1", "rpc", classes);
-            rpcClient = new RpcClient(serviceDiscovery);
+            ServiceDiscovery serviceDiscovery = new ServiceDiscovery("127.0.0.1:2181", "rpc", classes);
+            RpcClient rpcClient = new RpcClient(serviceDiscovery);
             HelloService syncClient = rpcClient.create(HelloService.class,6000l);
             String result = syncClient.hello("tom");
             System.out.println(result);
