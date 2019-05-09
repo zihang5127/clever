@@ -123,15 +123,15 @@ public class ConnectManage {
             for (Map.Entry<String, CopyOnWriteArrayList<RpcClientHandler>> oldConnectedHandlers : connectedHandlersMap.entrySet()) {
                 for (RpcClientHandler oldConnectedServerHandler : oldConnectedHandlers.getValue()) {
                     SocketAddress oldRemoteNode = oldConnectedServerHandler.getRemoteAddress();
-                    String serviceName = oldConnectedServerHandler.getServiceName();
+                    String oldServiceName = oldConnectedServerHandler.getServiceName();
                     for (Map.Entry<String, Set<InetSocketAddress>> newInetSocketAddress : newServiceNodesMap.entrySet()) {
-                        if (serviceName.equals(newInetSocketAddress.getKey()) && !newInetSocketAddress.getValue().contains(oldRemoteNode)) {
+                        if (oldServiceName.equals(newInetSocketAddress.getKey()) && !newInetSocketAddress.getValue().contains(oldRemoteNode)) {
                             logger.info("Remove server invalid  node :{}" + oldRemoteNode);
-                            RpcClientHandler handler = connectedServerNodes.get(serviceName);
+                            RpcClientHandler handler = connectedServerNodes.get(oldServiceName);
                             if (handler != null) {
                                 handler.close();
                             }
-                            connectedServerNodes.remove(serviceName);
+                            connectedServerNodes.remove(oldServiceName);
                             oldConnectedHandlers.getValue().remove(oldConnectedServerHandler);
                         }
                     }
