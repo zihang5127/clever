@@ -8,20 +8,12 @@ public class RpcResponse {
     private String error;
     private Object result;
 
-    public boolean isError() {
-        return error != null;
-    }
-
     public String getRequestId() {
         return requestId;
     }
 
     public void setRequestId(String requestId) {
         this.requestId = requestId;
-    }
-
-    public String getError() {
-        return error;
     }
 
     public void setError(String error) {

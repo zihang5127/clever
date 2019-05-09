@@ -146,10 +146,4 @@ public class RpcServer implements ApplicationListener<ContextRefreshedEvent> {
             future.channel().closeFuture().sync();
         }
     }
-
-    @PreDestroy
-    public void destory() {
-        //TODO 容器销毁 删除zookeeper注册信息
-
-    }
 }
