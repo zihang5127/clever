@@ -44,7 +44,6 @@ public class RpcApplication {
 public class RPCTest {
     public static void main(String[] args) {
         List<Class<?>> classes = new ArrayList<>();
-        classes.add(UserService.class);
         classes.add(HelloService.class);
         RpcClient rpcClient = null;
 
