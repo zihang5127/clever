@@ -9,7 +9,7 @@ rpc.topic=rpc
 
 2. Define an interface:
 ```java
-public interface HelloService { 
+public interface HelloService {
     String hello(String name); 
 }
 ```
