@@ -1,5 +1,5 @@
 # clever
-### How to use
+### How to Usage?
 1. Configuration application. The properties
 ```properties
 zk.address=127.0.0.1:2181
