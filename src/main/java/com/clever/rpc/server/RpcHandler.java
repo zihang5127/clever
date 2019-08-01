@@ -2,7 +2,6 @@ package com.clever.rpc.server;
 
 import com.clever.rpc.pojo.RpcRequest;
 import com.clever.rpc.pojo.RpcResponse;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
