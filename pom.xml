@@ -17,6 +17,12 @@
     <properties>
         <java.version>1.8</java.version>
         <lombok.version>1.16.20</lombok.version>
+        <apache-zookeeper.version>3.4.14</apache-zookeeper.version>
+        <commons-collections4.version>4.0</commons-collections4.version>
+        <protostuff.version>1.0.8</protostuff.version>
+        <jetty.version>4.1.34.Final</jetty.version>
+        <fastjson.version>1.2.58</fastjson.version>
+        <zkclient.version>0.1</zkclient.version>
     </properties>
 
     <dependencies>
@@ -35,24 +41,24 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
-            <version>4.0</version>
+            <version>${commons-collections4.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.dyuproject.protostuff</groupId>
             <artifactId>protostuff-core</artifactId>
-            <version>1.0.8</version>
+            <version>${protostuff.version}</version>
         </dependency>
         <dependency>
             <groupId>com.dyuproject.protostuff</groupId>
             <artifactId>protostuff-runtime</artifactId>
-            <version>1.0.8</version>
+            <version>${protostuff.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.34.Final</version>
+            <version>${jetty.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -63,17 +69,17 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.58</version>
+            <version>${fastjson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
-            <version>3.4.6</version>
+            <version>${apache-zookeeper.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.sgroschupf</groupId>
             <artifactId>zkclient</artifactId>
-            <version>0.1</version>
+            <version>${zkclient.version}</version>
         </dependency>
     </dependencies>
 
