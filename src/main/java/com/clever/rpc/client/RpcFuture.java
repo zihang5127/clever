@@ -108,7 +108,7 @@ public class RpcFuture implements Future<Object> {
         @Override
         protected boolean tryRelease(int arg) {
             if (getState() == pending) {
-                //尝试释放锁  当状态为0的时候获取锁
+                //尝试释放锁  当状态为0时释放
                 if (compareAndSetState(pending, done)) {
                     return true;
                 } else {
