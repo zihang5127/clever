@@ -1,19 +1,19 @@
 # clever
-### How to Usage?
-1. Configuration application. The properties
+### 如何使用?
+1. 配置
 ```properties
 zk.address=127.0.0.1:2181
 rpc.server.port=8088
 rpc.topic=rpc
 ```
 
-2. Define an interface:
+2. 定义接口
 ```java
 public interface HelloService {
     String hello(String name); 
 }
 ```
-3. Implement the interface with annotation @Service:
+3. 实现接口并且加@Service注解
 ```java
 @Service
 public class HelloServiceImpl implements HelloService {
@@ -24,11 +24,11 @@ public class HelloServiceImpl implements HelloService {
     }
 }
 ```
-4. Run zookeeper
+4. 运行 zookeeper
 ```
 For example: zookeeper is running on 127.0.0.1:2181
 ```
-5. Start server:
+5. 启动服务端:
 ```java
 @SpringBootApplication
 public class RpcApplication {
@@ -38,7 +38,7 @@ public class RpcApplication {
 }
 
 ```
-6. Use the client:
+6. 启动客户端:
 
 ```java
 public class RPCTest {
