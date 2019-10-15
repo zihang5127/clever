@@ -7,7 +7,7 @@ rpc.server.port=8088
 rpc.topic=rpc
 ```
 
-**1、定义接口**
+**2、定义接口**
 ```java
 public interface HelloService {
     String hello(String name); 
