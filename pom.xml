@@ -18,7 +18,7 @@
         <java.version>1.8</java.version>
         <lombok.version>1.16.20</lombok.version>
         <apache-zookeeper.version>3.4.14</apache-zookeeper.version>
-        <commons-collections4.version>4.0</commons-collections4.version>
+        <commons-collections4.version>4.1</commons-collections4.version>
         <protostuff.version>1.0.8</protostuff.version>
         <jetty.version>4.1.34.Final</jetty.version>
         <fastjson.version>1.2.58</fastjson.version>
